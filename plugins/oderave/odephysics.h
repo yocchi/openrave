@@ -208,8 +208,11 @@ The possible properties that can be set are: ";
         ss << "\n\n";
         __description = ss.str();
         _globalfriction = 0.4;
-        _globalerp = 0.01;
-        _globalcfm = 1e-5;
+        double dt = 0.01;
+        const double kp = 1e7;
+        const double kd = 1e4;
+        _globalerp = dt * kp / (dt * kp + kd);
+        _globalcfm = 1 / (dt * kp + kd);
         _num_iterations = 20;
         //Default to openrave 0.6.6 behavior, but this really should default to
         //enable the friction pyramid model.
@@ -258,8 +261,8 @@ The possible properties that can be set are: ";
                           %_num_iterations%dWorldGetQuickStepNumIterations (_odespace->GetWorld())));
         dWorldSetERP(_odespace->GetWorld(),_globalerp);
         dWorldSetCFM(_odespace->GetWorld(),_globalcfm);
-        dWorldSetQuickStepNumIterations (_odespace->GetWorld(), _num_iterations);
-        dWorldSetContactSurfaceLayer(_odespace->GetWorld(), _surfacelayer);
+        /* dWorldSetQuickStepNumIterations (_odespace->GetWorld(), _num_iterations); */
+        /* dWorldSetContactSurfaceLayer(_odespace->GetWorld(), _surfacelayer); */
         return true;
     }
 
@@ -324,7 +327,7 @@ The possible properties that can be set are: ";
         if( !!_odespace && _odespace->IsInitialized() ) {
             dWorldSetERP(_odespace->GetWorld(),_globalerp);
             dWorldSetCFM(_odespace->GetWorld(),_globalcfm);
-            dWorldSetQuickStepNumIterations (_odespace->GetWorld(), _num_iterations);
+            /* dWorldSetQuickStepNumIterations (_odespace->GetWorld(), _num_iterations); */
         }
     }
 
@@ -492,6 +495,7 @@ The possible properties that can be set are: ";
     virtual void SimulateStep(OpenRAVE::dReal fTimeElapsed)
     {
         _odespace->Synchronize();
+        _dt = fTimeElapsed;
 
         bool bHasCallbacks = GetEnv()->HasRegisteredCollisionCallbacks();
         if( bHasCallbacks ) {
@@ -515,7 +519,7 @@ The possible properties that can be set are: ";
             }
         }
 
-        dWorldQuickStep(_odespace->GetWorld(), fTimeElapsed);
+        dWorldStep(_odespace->GetWorld(), fTimeElapsed);
         dJointGroupEmpty (_odespace->GetContactGroup());
 
         // synchronize all the objects from the ODE world to the OpenRAVE world
@@ -634,10 +638,12 @@ private:
             contact[i].surface.mu2 = (dReal)_globalfriction;
             //        contact[i].surface.slip1 = 0.7;
             //        contact[i].surface.slip2 = 0.7;
-            //        contact[i].surface.mode = dContactSoftERP | dContactSoftCFM | dContactApprox1 | dContactSlip1 | dContactSlip2;
             //        contact[i].surface.mu = 50.0; // was: dInfinity
-            //        contact[i].surface.soft_erp = 0.96;
-            //        contact[i].surface.soft_cfm = 0.04;
+            contact[i].surface.mode = dContactSoftERP | dContactSoftCFM | dContactApprox1;
+            const double kp = 1e7;
+            const double kd = 1e8;
+            contact[i].surface.soft_erp = _dt * kp / (_dt * kp + kd);
+            contact[i].surface.soft_cfm = 1.0 / (_dt * kp + kd);
             dJointID c = dJointCreateContact (_odespace->GetWorld(),_odespace->GetContactGroup(),contact+i);
 
             // make sure that static objects are not enabled by adding a joint attaching them
@@ -685,6 +691,7 @@ private:
     Vector _gravity;
     int _options;
     dReal _globalfriction, _globalcfm, _globalerp;
+    dReal _dt;
 
     /**
      * _surface_mode stores global surface settings in dSurfaceParameters.
