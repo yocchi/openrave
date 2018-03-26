@@ -169,111 +169,17 @@ OPENRAVE_API log4cxx::LevelPtr RaveGetVerboseLogLevel();
 #define OPENRAVE_LOG4CXX_INFOLEVEL(logger, message, location) {if (!!logger && logger->isInfoEnabled()) { logger->forcedLog(::log4cxx::Level::getInfo(), message, location); }}
 #define OPENRAVE_LOG4CXX_DEBUGLEVEL(logger, message, location) {if (!!logger && logger->isDebugEnabled()) { logger->forcedLog(::log4cxx::Level::getDebug(), message, location); }}
 #define OPENRAVE_LOG4CXX_VERBOSELEVEL(logger, message, location) {if (!!logger && logger->isTraceEnabled()) { logger->forcedLog(OpenRAVE::RaveGetVerboseLogLevel(), message, location); }}
+#define _printf_(a,b) __attribute__ ((format (printf, a, b)))
+#define DeclareRavePrintfW(LEVEL) \
+    OPENRAVE_API int RavePrintfW ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const wchar_t *wfmt, ...);
 
-#define DefineRavePrintfW(LEVEL) \
-    inline int RavePrintfW ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const wchar_t *wfmt, ...) \
-    { \
-        va_list list; \
-        wchar_t wbuf[512]; /* wide char buffer to hold vswprintf result */ \
-        wchar_t* ws = &wbuf[0]; \
-        wchar_t* wsallocated = NULL; /* allocated wide char buffer */ \
-        int wslen = sizeof(wbuf)/sizeof(wchar_t); /* wide char buffer length (character count) */ \
-        int wr = -1; \
-        \
-        va_start(list, wfmt); \
-        for (;;) { \
-            wr = vswprintf(ws, wslen, wfmt, list); \
-            if (wr >= 0) { \
-                break; \
-            } \
-            if (wslen >= 16384) { \
-                wr = -1; \
-                break; \
-            } \
-            /* vswprintf does not tell us how much space is needed, so we need to grow until it is satisfied */ \
-            wslen *= 2; \
-            wsallocated = (wchar_t*)realloc(wsallocated, wslen*sizeof(wchar_t)); \
-            ws = wsallocated; \
-        } \
-        if (wr >= 0) { \
-            /* get rid of the trailing \n if presnet */ \
-            if (wr > 0 && ws[wr-1] == L'\n') { \
-                ws[wr-1] = '\0'; \
-            } \
-            if (!!logger) { \
-                OPENRAVE_LOG4CXX ## LEVEL(logger, ws, location); \
-            } else { \
-                wprintf(L"%ls\n", ws); \
-            } \
-        } \
-        va_end(list); \
-        if (wsallocated != NULL) { \
-            free(wsallocated); \
-            wsallocated = NULL; \
-        } \
-        return wr; \
-    }
 
-#define DefineRavePrintfA(LEVEL) \
-    inline int RavePrintfA ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const std::string& s) \
-    { \
-        if (!!logger) { \
-            if (s.size() > 0 && s[s.size()-1] == '\n') { \
-                std::string s1(s, 0, s.size()-1); \
-                OPENRAVE_LOG4CXX ## LEVEL(logger, s1, location); \
-            } else { \
-                OPENRAVE_LOG4CXX ## LEVEL(logger, s, location); \
-            } \
-        } else { \
-            if (s.size() > 0 && s[s.size()-1] == '\n') { \
-                printf("%s", s.c_str()); \
-            } else { \
-                printf("%s\n", s.c_str()); \
-            } \
-        } \
-        return s.size(); \
-    } \
-    \
-    inline int RavePrintfA ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const char *fmt, ...) \
-    { \
-        va_list list; \
-        char buf[512]; \
-        char* s = &buf[0]; \
-        char* sallocated = NULL; \
-        int slen = 0; \
-        int r = 0; \
-        va_start(list,fmt); \
-        r = vsnprintf(buf, sizeof(buf)/sizeof(char), fmt, list); \
-        if (r >= (int)(sizeof(buf)/sizeof(char))) { \
-            slen = r+1; \
-            sallocated = (char*)malloc(slen*sizeof(char)); \
-            s = sallocated; \
-            r = vsnprintf(s, r+1, fmt, list); \
-            if (r >= slen) { \
-                r = -1; \
-            } \
-        } \
-        if (r >= 0) { \
-            /* get rid of the trailing \n if presnet */ \
-            if (r > 0 && s[r-1] == '\n') { \
-                s[r-1] = '\0'; \
-            } \
-            if (!!logger) { \
-                OPENRAVE_LOG4CXX ## LEVEL(logger, s, location); \
-            } else { \
-                printf("%s\n", s); \
-            } \
-        } \
-        va_end(list); \
-        if (sallocated != NULL) { \
-            free(sallocated); \
-            sallocated = NULL; \
-        } \
-        return r; \
-    } \
+#define DeclareRavePrintfA(LEVEL) \
+    OPENRAVE_API int RavePrintfA ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const std::string& s); \
+    OPENRAVE_API int RavePrintfA ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const char *fmt, ...) _printf_(3, 4);
 
-DefineRavePrintfW(_INFOLEVEL)
-DefineRavePrintfA(_INFOLEVEL)
+DeclareRavePrintfW(_INFOLEVEL)
+DeclareRavePrintfA(_INFOLEVEL)
 
 inline int RavePrintfA(const std::string& s, uint32_t level)
 {
@@ -472,19 +378,19 @@ inline int RavePrintfA(const std::string& s, uint32_t level)
 #endif
 #endif
 
-DefineRavePrintfW(_FATALLEVEL)
-DefineRavePrintfW(_ERRORLEVEL)
-DefineRavePrintfW(_WARNLEVEL)
-//DefineRavePrintfW(_INFOLEVEL)
-DefineRavePrintfW(_DEBUGLEVEL)
-DefineRavePrintfW(_VERBOSELEVEL)
+DeclareRavePrintfW(_FATALLEVEL)
+DeclareRavePrintfW(_ERRORLEVEL)
+DeclareRavePrintfW(_WARNLEVEL)
+//DeclareRavePrintfW(_INFOLEVEL)
+DeclareRavePrintfW(_DEBUGLEVEL)
+DeclareRavePrintfW(_VERBOSELEVEL)
 
-DefineRavePrintfA(_FATALLEVEL)
-DefineRavePrintfA(_ERRORLEVEL)
-DefineRavePrintfA(_WARNLEVEL)
-//DefineRavePrintfA(_INFOLEVEL)
-DefineRavePrintfA(_DEBUGLEVEL)
-DefineRavePrintfA(_VERBOSELEVEL)
+DeclareRavePrintfA(_FATALLEVEL)
+DeclareRavePrintfA(_ERRORLEVEL)
+DeclareRavePrintfA(_WARNLEVEL)
+//DeclareRavePrintfA(_INFOLEVEL)
+DeclareRavePrintfA(_DEBUGLEVEL)
+DeclareRavePrintfA(_VERBOSELEVEL)
 
 // define log4cxx equivalents (eventually OpenRAVE will move to log4cxx logging)
 #define RAVELOG_FATALW(...) RAVELOG_LEVELW(_FATALLEVEL,OpenRAVE::Level_Fatal,__VA_ARGS__)
