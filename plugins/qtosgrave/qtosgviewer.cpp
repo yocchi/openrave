@@ -1541,10 +1541,43 @@ GraphHandlePtr QtOSGViewer::drawlinelist(const float* ppoints, int numPoints, in
     return GraphHandlePtr(new PrivateGraphHandle(shared_viewer(), handle));
 }
 
+void QtOSGViewer::_DrawArrow(OSGSwitchPtr handle, const RaveVector<float>& p1, const RaveVector<float>& p2, float fwidth, const RaveVector<float>& color, bool bUsingTransparency)
+{
+    osg::Vec3 op1(p1[0], p1[1], p1[2]);
+    osg::Vec3 op2(p2[0], p2[1], p2[2]);
+    osg::Vec3 v = op2 - op1;
+    const double height = v.length();
+    v.normalize();
+    osg::Vec3 h = (op1 + op2) * 0.5;
+
+    OSGMatrixTransformPtr trans(new osg::MatrixTransform());
+    osg::Matrix m = osg::Matrix::rotate(osg::Vec3(0, 0, 1), v) * osg::Matrix::translate(h);
+    trans->setMatrix(m);
+    osg::ref_ptr<osg::Geode> geode(new osg::Geode());
+
+    osg::ref_ptr<osg::Cylinder> cyl = new osg::Cylinder(osg::Vec3(), fwidth, height);
+
+    osg::ref_ptr<osg::ShapeDrawable> sd = new osg::ShapeDrawable(cyl.get());
+    geode->addDrawable(sd);
+
+    osg::ref_ptr<osg::StateSet> state = geode->getOrCreateStateSet();
+    osg::ref_ptr<osg::Material> material = new osg::Material;
+    osg::Vec4f osg_color(color[0], color[1], color[2], color[3]);
+    material->setAmbient(osg::Material::FRONT_AND_BACK, osg_color);
+    material->setDiffuse(osg::Material::FRONT_AND_BACK, osg_color);
+    state->setAttribute(material);
+    state->setRenderingHint(bUsingTransparency ? osg::StateSet::TRANSPARENT_BIN : osg::StateSet::OPAQUE_BIN);
+
+    trans->addChild(geode);
+    handle->addChild(trans);
+    _posgWidget->GetFigureRoot()->insertChild(0, handle);
+}
+
 GraphHandlePtr QtOSGViewer::drawarrow(const RaveVector<float>& p1, const RaveVector<float>& p2, float fwidth, const RaveVector<float>& color)
 {
-    RAVELOG_WARN("drawarrow not implemented\n");
-    return GraphHandlePtr();
+    OSGSwitchPtr handle = _CreateGraphHandle();
+    _PostToGUIThread(boost::bind(&QtOSGViewer::_DrawArrow, this, handle, p1, p2, fwidth, color, false)); // copies ref counts
+    return GraphHandlePtr(new PrivateGraphHandle(shared_viewer(), handle));
 }
 
 void QtOSGViewer::_DrawBox(OSGSwitchPtr handle, const RaveVector<float>& vpos, const RaveVector<float>& vextents, bool bUsingTransparency)
