@@ -604,7 +604,9 @@ Some python code to display data::\n\
         }
 
         BOOST_ASSERT( goalpath.goalindex >= 0 && goalpath.goalindex < (int)_vecGoalNodes.size() );
-        _SimpleOptimizePath(_cachedpath,10);
+        //int prevsize = _cachedpath.size();
+        //_SimpleOptimizePath(_cachedpath,10);
+        //RAVELOG_INFO("simple optimize path node %d -> %d\n", prevsize, _cachedpath.size());
         goalpath.qall.resize(_cachedpath.size());
         std::copy(_cachedpath.begin(), _cachedpath.end(), goalpath.qall.begin());
         goalpath.length = 0;
