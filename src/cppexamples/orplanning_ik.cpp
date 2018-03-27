@@ -22,6 +22,7 @@ namespace cppexamples {
 class PlanningIkExample : public OpenRAVEExample
 {
 public:
+    // PlanningIkExample() : cppexamples::OpenRAVEExample("qtosg") {}
     virtual void demothread(int argc, char ** argv) {
         string scenefilename = "data/pa10grasp2.env.xml";
         penv->Load(scenefilename);
@@ -56,13 +57,17 @@ public:
         penv->Add(pbasemanip,true,probot->GetName()); // load the module
 
         while(IsOk()) {
+            GraphHandlePtr axes[3];
             {
                 EnvironmentMutex::scoped_lock lock(penv->GetMutex()); // lock environment
 
                 // find a new manipulator position and feed that into the planner. If valid, robot will move to it safely.
                 Transform t = pmanip->GetEndEffectorTransform();
                 t.trans += Vector(RaveRandomFloat()-0.5f,RaveRandomFloat()-0.5f,RaveRandomFloat()-0.5f);
-                t.rot = quatMultiply(t.rot,quatFromAxisAngle(Vector(RaveRandomFloat()-0.5f,RaveRandomFloat()-0.5f,RaveRandomFloat()-0.5f)*0.2f));
+                t.rot = quatMultiply(t.rot,quatFromAxisAngle(Vector(RaveRandomFloat()-0.5f,RaveRandomFloat()-0.5f,RaveRandomFloat()-0.5f)));
+                axes[0] = penv->drawarrow(t.trans, t * Vector(0.2, 0, 0), 0.01, Vector(1, 0, 0, 1));
+                axes[1] = penv->drawarrow(t.trans, t * Vector(0, 0.2, 0), 0.01, Vector(0, 1, 0, 1));
+                axes[2] = penv->drawarrow(t.trans, t * Vector(0, 0, 0.2), 0.01, Vector(0, 0, 1, 1));
                 ssin.str("");
                 ssin.clear();
                 ssin << "MoveToHandPosition pose " << t;

@@ -1525,10 +1525,39 @@ GraphHandlePtr QtOSGViewer::drawlinelist(const float* ppoints, int numPoints, in
     return GraphHandlePtr(new PrivateGraphHandle(shared_viewer(), handle));
 }
 
+void QtOSGViewer::_DrawArrow(OSGSwitchPtr handle, const RaveVector<float>& p1, const RaveVector<float>& p2, float fwidth, const RaveVector<float>& color, bool bUsingTransparency)
+{
+    const osg::Vec3 op1(p1[0], p1[1], p1[2]);
+    const osg::Vec3 op2(p2[0], p2[1], p2[2]);
+    const osg::Vec4 oc(color[0], color[1], color[2], color[3]);
+    osg::Vec3 v = op2 - op1;
+    const double height = v.length();
+    v.normalize();
+
+    osg::ref_ptr<osg::ShapeDrawable> c =
+      new osg::ShapeDrawable(new osg::Cylinder(osg::Vec3(0, 0, 0.46 * height), fwidth, 0.92 * height));
+    c->setColor(oc);
+    osg::ref_ptr<osg::ShapeDrawable> cn =
+      new osg::ShapeDrawable(new osg::Cone(osg::Vec3(0, 0, 0.95 * height), 1.5 * fwidth, 0.1 * height));
+    cn->setColor(oc);
+
+    osg::ref_ptr<osg::Geode> geode(new osg::Geode());
+    geode->addDrawable(c);
+    geode->addDrawable(cn);
+    geode->getOrCreateStateSet()->setRenderingHint(bUsingTransparency ? osg::StateSet::TRANSPARENT_BIN : osg::StateSet::OPAQUE_BIN);
+
+    osg::Matrix m = osg::Matrix::rotate(osg::Vec3(0, 0, 1), v) * osg::Matrix::translate(op1);
+    OSGMatrixTransformPtr trans(new osg::MatrixTransform(m));
+    trans->addChild(geode);
+    handle->addChild(trans);
+    _posgWidget->GetFigureRoot()->insertChild(0, handle);
+}
+
 GraphHandlePtr QtOSGViewer::drawarrow(const RaveVector<float>& p1, const RaveVector<float>& p2, float fwidth, const RaveVector<float>& color)
 {
-    RAVELOG_WARN("drawarrow not implemented\n");
-    return GraphHandlePtr();
+    OSGSwitchPtr handle = _CreateGraphHandle();
+    _PostToGUIThread(boost::bind(&QtOSGViewer::_DrawArrow, this, handle, p1, p2, fwidth, color, false)); // copies ref counts
+    return GraphHandlePtr(new PrivateGraphHandle(shared_viewer(), handle));
 }
 
 void QtOSGViewer::_DrawBox(OSGSwitchPtr handle, const RaveVector<float>& vpos, const RaveVector<float>& vextents, bool bUsingTransparency)
