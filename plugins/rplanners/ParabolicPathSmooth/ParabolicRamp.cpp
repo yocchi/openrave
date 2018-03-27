@@ -3028,7 +3028,7 @@ Real SolveMinTimeBounded(const Vector& x0,const Vector& v0,const Vector& x1,cons
                         if( 0 ) { //newramp.SolveFixedAccelSwitchTime(amax[i], vmax[i], ramps[islowest][0].tswitch1, ramps[islowest][0].ttotal - ramps[islowest][0].tswitch2) ) {
                             // time has to be slower
                             if( newramp.ttotal > endTime+EpsilonT ) {
-                                PARABOLIC_RAMP_PLOG("set new time %.15es for index %d\n", newramp.ttotal);
+                                PARABOLIC_RAMP_PLOG("set new time %.15es for index %d\n", newramp.ttotal, i);
                                 endTime = newramp.ttotal;
                             }
                             else {
