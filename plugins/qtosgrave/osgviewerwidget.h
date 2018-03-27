@@ -19,8 +19,8 @@
 #include "osgpick.h"
 #include "osgskybox.h"
 
-#include <QtCore/QTimer>
-#include <QtGui/QApplication>
+#include <QTimer>
+#include <QApplication>
 #include <osgViewer/CompositeViewer>
 #include <osgViewer/ViewerEventHandlers>
 #include <osg/PositionAttitudeTransform>

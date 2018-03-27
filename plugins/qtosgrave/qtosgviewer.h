@@ -18,6 +18,8 @@
 #include "osgrenderitem.h"
 
 #include <QMainWindow>
+#include <QGridLayout>
+#include <QComboBox>
 
 #include "qtreemodel.h"
 

@@ -30,6 +30,8 @@
 #include <osgManipulator/Translate2DDragger>
 #include <osgManipulator/TranslateAxisDragger>
 
+#include <QGridLayout>
+
 namespace qtosgrave {
 
 class OpenRAVETrackball : public osgGA::TrackballManipulator
@@ -387,8 +389,13 @@ ViewerWidget::ViewerWidget(EnvironmentBasePtr penv, const std::string& userdatak
     _osgview = new osgViewer::View();
     _osghudview = new osgViewer::View();
 
+#if QT_VERSION >= 0x050000
+    // Qt5 is currently crashing and reporting "Cannot make QOpenGLContext current in a different thread" when the viewer is run multi-threaded, this is regression from Qt4
+    setThreadingModel(osgViewer::CompositeViewer::SingleThreaded);
+#else
     //  Improve FPS to 60 per viewer
     setThreadingModel(osgViewer::CompositeViewer::CullDrawThreadPerContext);
+#endif
 
     QWidget* widgetview = _AddViewWidget(_CreateCamera(0,0,100,100, metersinunit), _osgview, _CreateHUDCamera(0,0,100,100, metersinunit), _osghudview);
     QGridLayout* grid = new QGridLayout;

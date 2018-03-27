@@ -13,12 +13,12 @@ endif()
 #include(${CMAKE_SOURCE_DIR}/modules-cmake/FindOSG.cmake)
 find_package(OpenSceneGraph 3.4 COMPONENTS osgDB osgQt osgGA osgFX osgText osgViewer osgManipulator)
 
-if (QT_FOUND AND QT_QTCORE_FOUND AND QT_QTGUI_FOUND AND OPENGL_FOUND AND OPENSCENEGRAPH_FOUND AND OSGQT_FOUND)
+if (OSGQT_FOUND)
   message(STATUS "Detected Qt/OSG GUI, making plugin")
 
   include_directories(${QT_INCLUDE_DIR} ${OPENGL_INCLUDE_DIR} ${QT_QTOPENGL_INCLUDE_DIR})
-  message(STATUS "QT dirs: " ${QT_INCLUDE_DIR} " OPENGL: " ${QT_QTOPENGL_INCLUDE_DIR})
-  include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS})
+  message(STATUS "QT dirs: " ${Qt5Widgets_INCLUDE_DIRS} " OPENGL: " ${QT_QTOPENGL_INCLUDE_DIR})
+  include_directories(${OPENSCENEGRAPH_INCLUDE_DIRS} ${Qt5Widgets_INCLUDE_DIRS} ${Qt5OpenGL_INCLUDE_DIRS})
   #set(OPENRAVE_LINK_DIRS ${OPENRAVE_LINK_DIRS} "/usr/lib" "/usr/share/qt4/lib")
   
   link_directories(${OPENRAVE_LINK_DIRS})
@@ -28,10 +28,10 @@ if (QT_FOUND AND QT_QTCORE_FOUND AND QT_QTGUI_FOUND AND OPENGL_FOUND AND OPENSCE
   set(QTOSG_RCCS qtosgviewer.qrc)
 
   # generate rules for building source files from the resources
-  qt4_add_resources(QTOSG_RCC_SRCS ${QTOSG_RCCS})
+  qt5_add_resources(QTOSG_RCC_SRCS ${QTOSG_RCCS})
 
-  include( ${QT_USE_FILE} )
-  qt4_wrap_cpp(QTOSG_MOC_SRCS ${QTOSG_MOCS})
+  #include( ${QT_USE_FILE} )
+  qt5_wrap_cpp(QTOSG_MOC_SRCS ${QTOSG_MOCS})
   
   check_include_file(X11/Xlib.h HAVE_X11_XLIB_H)
 
