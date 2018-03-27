@@ -20,7 +20,130 @@
 #include "md5.h"
 
 namespace OpenRAVE {
-namespace utils {
+
+#define DefineRavePrintfW(LEVEL) \
+     int RavePrintfW ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const wchar_t *wfmt, ...) \
+    { \
+        va_list list; \
+        wchar_t wbuf[512]; /* wide char buffer to hold vswprintf result */ \
+        wchar_t* ws = &wbuf[0]; \
+        wchar_t* wsallocated = NULL; /* allocated wide char buffer */ \
+        int wslen = sizeof(wbuf)/sizeof(wchar_t); /* wide char buffer length (character count) */ \
+        int wr = -1; \
+        \
+        va_start(list, wfmt); \
+        for (;;) { \
+            wr = vswprintf(ws, wslen, wfmt, list); \
+            if (wr >= 0) { \
+                break; \
+            } \
+            if (wslen >= 16384) { \
+                wr = -1; \
+                break; \
+            } \
+            /* vswprintf does not tell us how much space is needed, so we need to grow until it is satisfied */ \
+            wslen *= 2; \
+            wsallocated = (wchar_t*)realloc(wsallocated, wslen*sizeof(wchar_t)); \
+            ws = wsallocated; \
+        } \
+        if (wr >= 0) { \
+            /* get rid of the trailing \n if presnet */ \
+            if (wr > 0 && ws[wr-1] == L'\n') { \
+                ws[wr-1] = '\0'; \
+            } \
+            if (!!logger) { \
+                OPENRAVE_LOG4CXX ## LEVEL(logger, ws, location); \
+            } else { \
+                wprintf(L"%ls\n", ws); \
+            } \
+        } \
+        va_end(list); \
+        if (wsallocated != NULL) { \
+            free(wsallocated); \
+            wsallocated = NULL; \
+        } \
+        return wr; \
+    }
+
+    DefineRavePrintfW(_INFOLEVEL)
+    DefineRavePrintfW(_FATALLEVEL)
+    DefineRavePrintfW(_ERRORLEVEL)
+    DefineRavePrintfW(_WARNLEVEL)
+//DefineRavePrintfW(_INFOLEVEL)
+    DefineRavePrintfW(_DEBUGLEVEL)
+    DefineRavePrintfW(_VERBOSELEVEL)
+
+#define DefineRavePrintfA(LEVEL) \
+     int RavePrintfA ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const std::string& s) \
+    { \
+        if (!!logger) { \
+            if (s.size() > 0 && s[s.size()-1] == '\n') { \
+                std::string s1(s, 0, s.size()-1); \
+                OPENRAVE_LOG4CXX ## LEVEL(logger, s1, location); \
+            } else { \
+                OPENRAVE_LOG4CXX ## LEVEL(logger, s, location); \
+            } \
+        } else { \
+            if (s.size() > 0 && s[s.size()-1] == '\n') { \
+                printf("%s", s.c_str()); \
+            } else { \
+                printf("%s\n", s.c_str()); \
+            } \
+        } \
+        return s.size(); \
+    } \
+    \
+     int RavePrintfA ## LEVEL(const log4cxx::LoggerPtr& logger, const log4cxx::spi::LocationInfo& location, const char *fmt, ...) \
+    { \
+        va_list list; \
+        char buf[512]; \
+        char* s = &buf[0]; \
+        char* sallocated = NULL; \
+        int slen = 0; \
+        int r = 0; \
+        va_start(list,fmt); \
+        r = vsnprintf(buf, sizeof(buf)/sizeof(char), fmt, list); \
+        if (r >= (int)(sizeof(buf)/sizeof(char))) { \
+            slen = r+1; \
+            sallocated = (char*)malloc(slen*sizeof(char)); \
+            s = sallocated; \
+            r = vsnprintf(s, r+1, fmt, list); \
+            if (r >= slen) { \
+                r = -1; \
+            } \
+        } \
+        if (r >= 0) { \
+            /* get rid of the trailing \n if presnet */ \
+            if (r > 0 && s[r-1] == '\n') { \
+                s[r-1] = '\0'; \
+            } \
+            if (!!logger) { \
+                OPENRAVE_LOG4CXX ## LEVEL(logger, s, location); \
+            } else { \
+                printf("%s\n", s); \
+            } \
+        } \
+        va_end(list); \
+        if (sallocated != NULL) { \
+            free(sallocated); \
+            sallocated = NULL; \
+        } \
+        return r; \
+    }
+
+        DefineRavePrintfA(_INFOLEVEL)
+
+        DefineRavePrintfA(_FATALLEVEL)
+
+        DefineRavePrintfA(_ERRORLEVEL)
+
+        DefineRavePrintfA(_WARNLEVEL)
+//DefineRavePrintfA(_INFOLEVEL)
+        DefineRavePrintfA(_DEBUGLEVEL)
+
+        DefineRavePrintfA(_VERBOSELEVEL)
+
+    namespace utils {
 
 std::string GetMD5HashString(const std::string& s)
 {
