@@ -30,7 +30,7 @@ set_target_properties(libopenrave PROPERTIES OUTPUT_NAME openrave${OPENRAVE_LIBR
                                   CLEAN_DIRECT_OUTPUT 1
                                   COMPILE_FLAGS "${LIBOPENRAVE_COMPILE_FLAGS} ${FPARSER_CXX_FLAGS} -DOPENRAVE_DLL_EXPORTS -DOPENRAVE_DLL"
                                   LINK_FLAGS "${LIBOPENRAVE_LINK_FLAGS} ${FPARSER_LINK_FLAGS}")
-target_link_libraries(libopenrave ${openrave_libraries} ${FPARSER_LIBRARIES} ${Intl_LIBRARIES})
+target_link_libraries(libopenrave ${openrave_libraries} ${FPARSER_LIBRARIES} ${Intl_LIBRARIES} dl pthread)
 if( MSVC )
   install(TARGETS libopenrave EXPORT openrave-targets RUNTIME DESTINATION bin COMPONENT ${COMPONENT_PREFIX}base LIBRARY DESTINATION bin COMPONENT ${COMPONENT_PREFIX}base ARCHIVE DESTINATION lib${LIB_SUFFIX} COMPONENT ${COMPONENT_PREFIX}base)
 else()
