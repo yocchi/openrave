@@ -193,7 +193,8 @@ if( CMAKE_CXX_COMPILER MATCHES "clang[\\+]*" )
 endif()
 
 if( CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR COMPILER_IS_CLANG)
-  add_definitions("-fno-strict-aliasing -Wall")
+  add_definitions("-fno-strict-aliasing -Wall -Wno-deprecated-declarations -Wno-overloaded-virtual")
+  #set(CMAKE_SHARED_LINKER_FLAGS -Wl,--no-undefined)
 endif()
 
 set(OPENRAVE_EXPORT_CXXFLAGS)
