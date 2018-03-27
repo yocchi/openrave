@@ -98,17 +98,21 @@ public:
 
         if( listpath.size() > 1 ) {
             if( _bUseSingleDOFSmoothing ) {
+                int prevsize = listpath.size();
                 dReal newdist1 = _OptimizePath(listpath, totaldist, parameters->_nMaxIterations*8/10);
                 if( newdist1 < 0 ) {
                     return PS_Interrupted;
                 }
-                RAVELOG_DEBUG_FORMAT("env=%d, path optimizing first stage - dist %f->%f, computation time=%fs", GetEnv()->GetId()%totaldist%newdist1%(0.001f*(float)(utils::GetMilliTime()-basetime)));
+                RAVELOG_DEBUG_FORMAT("env=%d, path optimizing first stage - dist %f->%f node %d->%d, computation time=%fs",
+                                     GetEnv()->GetId()%totaldist%newdist1%prevsize%listpath.size()%(0.001f*(float)(utils::GetMilliTime()-basetime)));
                 uint32_t basetime2 = utils::GetMilliTime();
+                prevsize = listpath.size();
                 dReal newdist2 = _OptimizePathSingleDOF(listpath, newdist1, parameters->_nMaxIterations*2/10);
                 if( newdist2 < 0 ) {
                     return PS_Interrupted;
                 }
-                RAVELOG_DEBUG_FORMAT("env=%d, path optimizing second stage - dist %f->%f computation time=%fs", GetEnv()->GetId()%newdist1%newdist2%(0.001f*(float)(utils::GetMilliTime()-basetime2)));
+                RAVELOG_DEBUG_FORMAT("env=%d, path optimizing second stage - dist %f->%f node %d->%d computation time=%fs",
+                                     GetEnv()->GetId()%newdist1%newdist2%prevsize%listpath.size()%(0.001f*(float)(utils::GetMilliTime()-basetime2)));
             }
             else {
                 dReal newdist1 = _OptimizePath(listpath, totaldist, parameters->_nMaxIterations);
